@@ -21,6 +21,8 @@ CapCraft is not affiliated with, endorsed by or connected to ByteDance or CapCut
 | UniFFI (Mozilla) | MPL-2.0 | the engine's Kotlin bindings |
 | `gif` and `png` crates (image-rs contributors) | MIT OR Apache-2.0 | writing GIF exports and freeze-frame stills |
 | sherpa-onnx (Xiaomi Corporation, k2-fsa) | Apache-2.0 | running the speech-enhancement model for Isolate voice |
+| Inter (The Inter Project Authors) | SIL OFL 1.1 | the interface typeface, `res/font/inter_variable.ttf` (licence text: `src/crates/concat-text/fonts/LICENSE-Inter.txt`) |
+| Bebas Neue (Dharma Type) | SIL OFL 1.1 | headlines and numbers, `res/font/bebas_neue_regular.ttf` (licence text: `src/crates/concat-text/fonts/LICENSE-BebasNeue.txt`) |
 
 Models downloaded on first use (speech recognition, voices, background removal, picture enhancement) come with the
 licences listed in `THIRD_PARTY_NOTICES.md`. Isolate voice downloads GTCRN (Xiaobin Rong and contributors, MIT), as

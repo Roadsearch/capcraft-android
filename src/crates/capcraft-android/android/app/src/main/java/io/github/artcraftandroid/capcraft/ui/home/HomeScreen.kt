@@ -13,13 +13,13 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -52,6 +52,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.geometry.CornerRadius
@@ -65,9 +66,13 @@ import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import io.github.artcraftandroid.capcraft.core.ProjectSummary
@@ -83,8 +88,10 @@ import io.github.artcraftandroid.capcraft.engine.Threads
 import io.github.artcraftandroid.capcraft.engine.clock
 import io.github.artcraftandroid.capcraft.engine.userMessage
 import io.github.artcraftandroid.capcraft.ui.Glyph
+import io.github.artcraftandroid.capcraft.ui.Inter
 import io.github.artcraftandroid.capcraft.ui.LucideIcons
 import io.github.artcraftandroid.capcraft.ui.MaterialIcons
+import io.github.artcraftandroid.capcraft.ui.MotionFlowMark
 import io.github.artcraftandroid.capcraft.ui.Palette
 import io.github.artcraftandroid.capcraft.ui.Type
 import io.github.artcraftandroid.capcraft.ui.common.Toast
@@ -95,8 +102,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 /**
- * The home screens' colours: light, as the reference's are, or dark while the phone is in dark mode.
- * The editor is dark either way.
+ * The home screens' colours: MotionFlow's dark palette, as the editor's.
  */
 private class HomeColors(
     val dark: Boolean,
@@ -124,50 +130,32 @@ private class HomeColors(
     val Round: Color,
 )
 
-private val LightHome = HomeColors(
-    dark = false,
-    Background = Color.White,
-    Ink = Color(0xFF161823),
-    OnInk = Color.White,
-    Muted = Color(0xFF8A8B91),
-    Hairline = Color(0xFFECECEE),
-    Tile = Color(0xFFF1F1F3),
-    Card = Color(0xC7FFFFFF),
-    Sheet = Color.White,
-    Field = Color(0xFFF1F2F4),
-    Grabber = Color(0xFFDADADD),
-    Ring = Color(0xFFC4C4C8),
-    More = Color(0xFFC6D1DB),
-    Wash = listOf(Color(0xFFA6D3F2), Color(0xFFDDE3E8)),
-    Round = Color(0xFFEFF2F5),
-)
-
-/** The same pages in the editor's blacks and greys. */
+/** The home pages in MotionFlow's indigo-blacks. */
 private val DarkHome = HomeColors(
     dark = true,
     Background = Palette.Black,
     Ink = Palette.Text,
     OnInk = Palette.Black,
-    Muted = Color(0xFF9A9BA1),
+    Muted = Palette.TextSecondary,
     Hairline = Palette.Divider,
     Tile = Palette.Card,
-    Card = Color(0xC71A1A1A),
+    Card = Palette.Card,
     Sheet = Palette.Panel,
     Field = Palette.CardPressed,
     Grabber = Palette.DockBack,
-    Ring = Color(0xFF5C5C60),
+    Ring = Palette.TextTertiary,
     More = Palette.CardPressed,
-    Wash = listOf(Color(0xFF15293A), Color(0xFF0B0B0D)),
-    Round = Color(0xFF262A30),
+    Wash = listOf(Palette.Panel, Palette.Black),
+    Round = Palette.Card,
 )
 
 private val Home: HomeColors
-    @Composable @ReadOnlyComposable get() = if (isSystemInDarkTheme()) DarkHome else LightHome
+    @Composable @ReadOnlyComposable get() = DarkHome
 
 @Composable
 @ReadOnlyComposable
 private fun ink(size: Float, weight: FontWeight = FontWeight.Normal, color: Color = Home.Ink) =
-    TextStyle(color = color, fontSize = size.sp, fontWeight = weight)
+    TextStyle(fontFamily = Inter, color = color, fontSize = size.sp, fontWeight = weight)
 
 /** A new project's title: the date and a count for the day, as phone editors name new drafts ("1016-02"). */
 private fun newProjectName(existing: List<ProjectSummary>): String {
@@ -540,71 +528,48 @@ private fun EditTab(
     onAllProjects: () -> Unit,
     onSearch: () -> Unit,
 ) {
-    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
-        Box(Modifier.fillMaxWidth()) {
-            HeroArt(Modifier.matchParentSize())
-            Column(Modifier.fillMaxWidth().statusBarsPadding()) {
-                Row(Modifier.fillMaxWidth().height(48.dp).padding(horizontal = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Spacer(Modifier.weight(1f))
-                    Box(Modifier.size(44.dp).clip(RoundedCornerShape(22.dp)).clickable(onClick = onSearch), contentAlignment = Alignment.Center) {
-                        Glyph(LucideIcons.Search, Color.White, size = 24.dp, description = "Search projects")
-                    }
-                }
-                Spacer(Modifier.height(176.dp))
-                Column(Modifier.padding(horizontal = 16.dp).clickable(onClick = onNewVideo)) {
-                    Text("Ready when you are", style = ink(14f, color = Color.White.copy(alpha = 0.92f)))
-                    Spacer(Modifier.height(2.dp))
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text("Make your next video", style = ink(21f, FontWeight.Bold, Color.White))
-                        Spacer(Modifier.width(6.dp))
-                        Box(Modifier.size(18.dp).clip(RoundedCornerShape(4.dp)).background(Color.White.copy(alpha = 0.3f)), contentAlignment = Alignment.Center) {
-                            Glyph(LucideIcons.ChevronRight, Color.White, size = 14.dp)
-                        }
-                    }
-                }
-                Spacer(Modifier.height(16.dp))
-                Row(Modifier.fillMaxWidth().height(112.dp).padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    CreateCard("New video", Modifier.weight(1.7f), onNewVideo) {
-                        Glyph(LucideIcons.Plus, Home.OnInk, size = 18.dp)
-                    }
-                    CreateCard("Edit photo", Modifier.weight(1f), onCaptions) {
-                        Glyph(LucideIcons.Image, Home.OnInk, size = 16.dp)
-                    }
-                }
-                Spacer(Modifier.height(16.dp))
+    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).statusBarsPadding().padding(horizontal = 16.dp)) {
+        Row(Modifier.fillMaxWidth().height(48.dp), verticalAlignment = Alignment.CenterVertically) {
+            MotionFlowMark(size = 26.dp)
+            Spacer(Modifier.width(8.dp))
+            Text(
+                buildAnnotatedString { append("Cap"); withStyle(SpanStyle(color = Color(0xFF3FD8F2))) { append("Craft") } },
+                style = ink(17f, FontWeight.SemiBold),
+                modifier = Modifier.weight(1f),
+            )
+            Box(Modifier.size(44.dp).clip(RoundedCornerShape(22.dp)).clickable(onClick = onSearch), contentAlignment = Alignment.Center) {
+                Glyph(LucideIcons.Search, Color.White, size = 24.dp, description = "Search projects")
             }
         }
+        Spacer(Modifier.height(10.dp))
+        NewVideoButton(onNewVideo)
+        Spacer(Modifier.height(14.dp))
+        val actions = listOf(QuickAction("Edit photo", LucideIcons.Image, onCaptions)) +
+            SHORTCUTS.map { s -> QuickAction(s.label, s.icon) { onShortcut(s) } }
+        actions.chunked(3).forEach { row ->
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                row.forEach { a -> QuickTile(a.label, a.icon, Modifier.weight(1f), a.onClick) }
+                repeat(3 - row.size) { Spacer(Modifier.weight(1f)) }
+            }
+            Spacer(Modifier.height(10.dp))
+        }
         if (projects.isNotEmpty()) {
-            // the recent projects scroll under a narrow card pinned at the right that opens them all,
-            // as the reference's strip
+            Spacer(Modifier.height(14.dp))
+            Text("Recent projects", style = ink(17f, FontWeight.SemiBold))
+            Spacer(Modifier.height(8.dp))
+            // the recent projects scroll under a narrow card pinned at the right that opens them all
             Box(Modifier.fillMaxWidth()) {
                 LazyRow(
-                    contentPadding = PaddingValues(start = 16.dp, end = 70.dp),
+                    contentPadding = PaddingValues(end = 54.dp),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     items(projects.take(12), key = { it.path }) { p -> StripTile(p) { onOpen(p) } }
                 }
                 Box(
-                    Modifier.align(Alignment.CenterEnd).padding(end = 16.dp).size(46.dp, 70.dp)
-                        .clip(RoundedCornerShape(6.dp)).background(Home.More).clickable(onClick = onAllProjects),
+                    Modifier.align(Alignment.CenterEnd).size(46.dp, 70.dp)
+                        .clip(RoundedCornerShape(14.dp)).background(Home.More).clickable(onClick = onAllProjects),
                     contentAlignment = Alignment.Center,
                 ) { Glyph(LucideIcons.ChevronRight, Color.White, size = 24.dp, description = "All projects") }
-            }
-            Spacer(Modifier.height(12.dp))
-        }
-        SHORTCUTS.chunked(3).forEach { row ->
-            Row(Modifier.fillMaxWidth().padding(horizontal = 8.dp)) {
-                row.forEach { s ->
-                    Column(
-                        Modifier.weight(1f).clip(RoundedCornerShape(10.dp)).clickable { onShortcut(s) }.padding(vertical = 22.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                    ) {
-                        Glyph(s.icon, Home.Ink, size = 26.dp)
-                        Spacer(Modifier.height(10.dp))
-                        Text(s.label, style = ink(13f), maxLines = 1, overflow = TextOverflow.Ellipsis)
-                    }
-                }
-                repeat(3 - row.size) { Spacer(Modifier.weight(1f)) }
             }
         }
         Spacer(Modifier.height(16.dp))
@@ -667,43 +632,44 @@ private fun ToolsSheet(title: String, tools: List<Triple<String, String, String>
  * The picture at the top of Edit, our own: a cyan-to-violet wash with a few tilted frames, as of
  * clips on a timeline, fading to the page's colour at the bottom.
  */
-@Composable
-private fun HeroArt(modifier: Modifier) {
-    val page = Home.Background
-    Canvas(modifier) {
-        val w = size.width
-        val h = size.height
-        drawRect(Brush.linearGradient(listOf(Color(0xFF27B9D9), Color(0xFF5C9CF0), Color(0xFF8B7CF2)), Offset.Zero, Offset(w, h * 0.8f)))
-        drawCircle(Brush.radialGradient(listOf(Color(0x66FFFFFF), Color.Transparent), Offset(w * 0.85f, h * 0.12f), w * 0.5f), w * 0.5f, Offset(w * 0.85f, h * 0.12f))
-        drawCircle(Brush.radialGradient(listOf(Color(0x40FFE4F2), Color.Transparent), Offset(w * 0.1f, h * 0.45f), w * 0.45f), w * 0.45f, Offset(w * 0.1f, h * 0.45f))
-        // a strip of frames running up the picture
-        rotate(-14f, Offset(w * 0.6f, h * 0.3f)) {
-            val fw = w * 0.2f
-            val fh = fw * 0.62f
-            for (row in 0 until 2) {
-                for (i in -1 until 6) {
-                    val x = i * (fw + w * 0.025f) + row * fw * 0.5f
-                    val y = h * 0.16f + row * (fh + w * 0.03f)
-                    drawRoundRect(Color.White.copy(alpha = if ((i + row) % 3 == 0) 0.34f else 0.16f), Offset(x, y), Size(fw, fh), CornerRadius(fw * 0.08f))
-                }
-            }
-        }
-        // the page coming up under the cards
-        drawRect(Brush.verticalGradient(listOf(page.copy(alpha = 0f), page), startY = h * 0.68f, endY = h))
-    }
-}
+/** One tile of the tool grid. */
+private class QuickAction(val label: String, val icon: ImageVector, val onClick: () -> Unit)
 
-/** A create card over the picture: a dark rounded square with the glyph, the label under it. */
+/** A tool tile: a card with a hairline border, the glyph over its label. */
 @Composable
-private fun CreateCard(label: String, modifier: Modifier, onClick: () -> Unit, glyph: @Composable () -> Unit) {
+private fun QuickTile(label: String, icon: ImageVector, modifier: Modifier, onClick: () -> Unit) {
+    val shape = RoundedCornerShape(18.dp)
     Column(
-        modifier.fillMaxSize().clip(RoundedCornerShape(12.dp)).background(Home.Card).clickable(onClick = onClick),
+        modifier.aspectRatio(1f).clip(shape).background(Home.Tile).border(1.dp, Home.Hairline, shape)
+            .clickable(onClick = onClick).padding(horizontal = 6.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
-        Box(Modifier.size(26.dp).clip(RoundedCornerShape(6.dp)).background(Home.Ink), contentAlignment = Alignment.Center) { glyph() }
-        Spacer(Modifier.height(10.dp))
-        Text(label, style = ink(15f, FontWeight.Medium), maxLines = 1)
+        Glyph(icon, Color.White, size = 26.dp)
+        Spacer(Modifier.height(8.dp))
+        Text(label, style = ink(12f, FontWeight.Medium, Color.White), maxLines = 2, textAlign = TextAlign.Center, overflow = TextOverflow.Ellipsis)
+    }
+}
+
+/** The main action: MotionFlow's brand-gradient button with its soft glow. */
+@Composable
+private fun NewVideoButton(onClick: () -> Unit) {
+    val shape = RoundedCornerShape(26.dp)
+    val brush = remember { Palette.brandBrush() }
+    Box(
+        Modifier.fillMaxWidth().height(92.dp)
+            .shadow(14.dp, shape, ambientColor = Palette.Cyan, spotColor = Palette.Violet)
+            .clip(shape).background(brush).clickable(onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Glyph(LucideIcons.Plus, Color.White, size = 28.dp)
+                Spacer(Modifier.width(6.dp))
+                Text("New video", style = ink(20f, FontWeight.SemiBold, Color.White))
+            }
+            Text("Photo or video", style = ink(12f, color = Color.White.copy(alpha = 0.85f)))
+        }
     }
 }
 
@@ -711,7 +677,7 @@ private fun CreateCard(label: String, modifier: Modifier, onClick: () -> Unit, g
 @Composable
 private fun StripTile(p: ProjectSummary, onClick: () -> Unit) {
     val cover = rememberCover(p)
-    Box(Modifier.size(70.dp).clip(RoundedCornerShape(6.dp)).background(Home.Tile).clickable(onClick = onClick)) {
+    Box(Modifier.size(70.dp).clip(RoundedCornerShape(14.dp)).background(Home.Tile).clickable(onClick = onClick)) {
         cover?.let { Image(it.asImageBitmap(), contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize()) }
         Box(Modifier.fillMaxWidth().height(28.dp).align(Alignment.BottomCenter).background(Brush.verticalGradient(listOf(Color.Transparent, Color(0x99000000)))))
         Row(Modifier.align(Alignment.BottomStart).padding(horizontal = 5.dp, vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -991,9 +957,9 @@ private object JustEdited {
 @Composable
 private fun BottomBar(tab: Int, latest: ProjectSummary?, onTab: (Int) -> Unit) {
     val cover = latest?.let { rememberCover(it) }
-    Column(Modifier.fillMaxWidth().background(Home.Background).navigationBarsPadding()) {
-        Box(Modifier.fillMaxWidth().height(1.dp).background(Home.Hairline))
-        Row(Modifier.fillMaxWidth().height(58.dp)) {
+    Column(Modifier.fillMaxWidth().background(Palette.Chrome).navigationBarsPadding()) {
+        Box(Modifier.fillMaxWidth().height(1.dp).background(Palette.Divider))
+        Row(Modifier.fillMaxWidth().height(62.dp)) {
             listOf(
                 Triple("Edit", LucideIcons.Scissors, 0),
                 Triple("Projects", LucideIcons.Folder, 1),
@@ -1006,18 +972,18 @@ private fun BottomBar(tab: Int, latest: ProjectSummary?, onTab: (Int) -> Unit) {
                     verticalArrangement = Arrangement.Center,
                 ) {
                     when {
-                        i == 1 && on -> Glyph(MaterialIcons.FolderFill, Home.Ink, size = 25.dp)
-                        i == 0 && on -> Glyph(MaterialIcons.ContentCut, Home.Ink, size = 24.dp)
+                        i == 1 && on -> Glyph(MaterialIcons.FolderFill, Palette.Active, size = 25.dp)
+                        i == 0 && on -> Glyph(MaterialIcons.ContentCut, Palette.Active, size = 24.dp)
                         i == 1 && cover != null -> Image(
                             cover.asImageBitmap(),
                             contentDescription = null,
                             contentScale = ContentScale.Crop,
                             modifier = Modifier.size(23.dp).clip(RoundedCornerShape(6.dp)),
                         )
-                        else -> Glyph(icon, if (on) Home.Ink else Home.Muted, size = 23.dp)
+                        else -> Glyph(icon, if (on) Palette.Active else Palette.TextTertiary, size = 24.dp)
                     }
                     Spacer(Modifier.height(3.dp))
-                    Text(label, style = ink(11f, if (on) FontWeight.SemiBold else FontWeight.Normal, if (on) Home.Ink else Home.Muted))
+                    Text(label, style = ink(11f, FontWeight.Medium, if (on) Palette.Active else Palette.TextTertiary))
                 }
             }
         }
