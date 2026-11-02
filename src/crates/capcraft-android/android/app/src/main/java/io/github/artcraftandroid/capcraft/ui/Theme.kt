@@ -3,14 +3,19 @@ package io.github.artcraftandroid.capcraft.ui
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Shapes
+import androidx.compose.material3.Typography
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontVariation
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import io.github.artcraftandroid.capcraft.R
 
 /**
  * The editor's palette, restyled to the MotionFlow design tokens: an indigo-black
@@ -80,13 +85,48 @@ object Palette {
     fun brandBrush(): Brush = Brush.linearGradient(BrandGradient)
 }
 
+/** Bebas Neue: bold headers, stylised titles, timecodes and numbers (SIL OFL 1.1). */
+val BebasNeue = FontFamily(Font(R.font.bebas_neue_regular, FontWeight.Normal))
+
+/** Inter (variable font): controls, sub-texts and values (SIL OFL 1.1). */
+val Inter = FontFamily(
+    listOf(FontWeight.Normal, FontWeight.Medium, FontWeight.SemiBold, FontWeight.Bold).map { w ->
+        Font(
+            resId = R.font.inter_variable,
+            weight = w,
+            variationSettings = FontVariation.Settings(FontVariation.weight(w.weight)),
+        )
+    },
+)
+
+private fun inter(size: Int, weight: FontWeight, line: Int = size + 6) =
+    TextStyle(fontFamily = Inter, fontWeight = weight, fontSize = size.sp, lineHeight = line.sp)
+
+private fun bebas(size: Int, spacing: Float = 0.5f) =
+    TextStyle(fontFamily = BebasNeue, fontWeight = FontWeight.Normal, fontSize = size.sp, lineHeight = (size + 4).sp, letterSpacing = spacing.sp)
+
+/** MotionFlow's type scale: Bebas Neue for display and headlines, Inter for everything else. */
+private val CapCraftTypography = Typography(
+    displayLarge = bebas(56), displayMedium = bebas(44), displaySmall = bebas(36),
+    headlineLarge = bebas(32), headlineMedium = bebas(28), headlineSmall = bebas(24),
+    titleLarge = inter(20, FontWeight.SemiBold),
+    titleMedium = inter(16, FontWeight.SemiBold),
+    titleSmall = inter(14, FontWeight.Medium),
+    bodyLarge = inter(16, FontWeight.Normal),
+    bodyMedium = inter(14, FontWeight.Normal),
+    bodySmall = inter(12, FontWeight.Normal),
+    labelLarge = inter(14, FontWeight.Medium),
+    labelMedium = inter(12, FontWeight.Medium),
+    labelSmall = inter(11, FontWeight.Medium),
+)
+
 object Type {
-    val Title = TextStyle(color = Palette.Text, fontSize = 17.sp, fontWeight = FontWeight.SemiBold)
-    val Body = TextStyle(color = Palette.Text, fontSize = 14.sp)
-    val BodyStrong = TextStyle(color = Palette.Text, fontSize = 14.sp, fontWeight = FontWeight.Medium)
-    val Small = TextStyle(color = Palette.TextSecondary, fontSize = 12.sp)
-    val Tiny = TextStyle(color = Palette.TextSecondary, fontSize = 10.sp)
-    val DockLabel = TextStyle(color = Palette.Text, fontSize = 10.sp)
+    val Title = TextStyle(fontFamily = Inter, color = Palette.Text, fontSize = 17.sp, fontWeight = FontWeight.SemiBold)
+    val Body = TextStyle(fontFamily = Inter, color = Palette.Text, fontSize = 14.sp)
+    val BodyStrong = TextStyle(fontFamily = Inter, color = Palette.Text, fontSize = 14.sp, fontWeight = FontWeight.Medium)
+    val Small = TextStyle(fontFamily = Inter, color = Palette.TextSecondary, fontSize = 12.sp)
+    val Tiny = TextStyle(fontFamily = Inter, color = Palette.TextSecondary, fontSize = 10.sp)
+    val DockLabel = TextStyle(fontFamily = Inter, color = Palette.Text, fontSize = 10.sp)
 }
 
 /** MotionFlow's corner radii. */
@@ -121,6 +161,7 @@ fun CapCraftTheme(content: @Composable () -> Unit) {
             outlineVariant = Palette.Divider,
             error = Palette.Danger,
         ),
+        typography = CapCraftTypography,
         shapes = CapCraftShapes,
         content = content,
     )
